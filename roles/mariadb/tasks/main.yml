@@ -1,0 +1,41 @@
+---
+# tasks file for mariadb
+
+- name: Include os specific tasks
+  ansible.builtin.include_tasks: "{{ ansible_facts['os_family'] }}.yml"
+
+- name: Create conf dir
+  ansible.builtin.file:
+    name: "{{ mariadb_conf_dir[ansible_facts['os_family']] | dirname }}"
+    owner: root
+    group: root
+    mode: "0755"
+    state: directory
+
+- name: Configure mariadb
+  ansible.builtin.template:
+    src: my.cnf.j2
+    dest: "{{ mariadb_conf_dir[ansible_facts['os_family']] }}/90-nextcloud.cfg"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart mariadb
+
+- name: Start and enable MariaDB
+  ansible.builtin.systemd:
+    name: mysql
+    state: started
+    enabled: true
+
+- name: Remove anonymous user
+  community.mysql.mysql_user:
+    name: ''
+    host_all: true
+    state: absent
+    login_unix_socket: "{{ mariadb_socket[ansible_facts['os_family']] }}"
+
+- name: Remove test db
+  community.mysql.mysql_db:
+    name: test
+    state: absent
+    login_unix_socket: "{{ mariadb_socket[ansible_facts['os_family']] }}"

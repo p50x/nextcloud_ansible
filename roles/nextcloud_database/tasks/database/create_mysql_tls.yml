@@ -1,0 +1,81 @@
+---
+# create nextcloud database SSL
+
+- name: Create MariaDB SSL directory
+  ansible.builtin.file:
+    path: "{{ mariadb_ssl_dir }}"
+    state: directory
+    owner: mysql
+    group: mysql
+    mode: "0750"
+
+- name: Generate MariaDB private key
+  community.crypto.openssl_privatekey:
+    path: "{{ mariadb_ssl.key }}"
+    owner: mysql
+    group: mysql
+    mode: "0600"
+
+- name: Generate MariaDB CSR
+  community.crypto.openssl_csr:
+    path: "{{ mariadb_ssl.csr }}"
+    owner: mysql
+    group: mysql
+    mode: "0640"
+    privatekey_path: "{{ mariadb_ssl.key }}"
+    common_name: "{{ tls_certificate_common_name }}"
+    subject_alt_name:
+      - "DNS:{{ tls_certificate_common_name }}"
+      - "IP:127.0.0.1"
+    key_usage_critical: true
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+    extended_key_usage_critical: true
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+
+- name: Sign MariaDB certificate with shared Root CA
+  community.crypto.x509_certificate:
+    path: "{{ mariadb_ssl.crt }}"
+    privatekey_path: "{{ mariadb_ssl.key }}"
+    csr_path: "{{ mariadb_ssl.csr }}"
+    ownca_path: "{{ tls_certificate_ca }}"
+    ownca_privatekey_path: "{{ tls_certificate_directory }}/root.ca.key"
+    provider: ownca
+    ownca_not_after: "+825d"
+    owner: mysql
+    group: mysql
+    mode: "0640"
+
+- name: Copy Root CA cert for MariaDB
+  ansible.builtin.copy:
+    src: "{{ tls_certificate_ca }}"
+    dest: "{{ mariadb_ssl.ca }}"          
+    remote_src: true
+    owner: mysql
+    group: mysql
+    mode: "0640"
+
+- name: Set correct permissions on SSL files
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: mysql
+    group: mysql
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ mariadb_ssl.key }}", mode: "0600" }
+    - { path: "{{ mariadb_ssl.csr }}", mode: "0640" }
+    - { path: "{{ mariadb_ssl.crt }}", mode: "0640" }
+    - { path: "{{ mariadb_ssl.ca }}",  mode: "0640" }
+
+- name: Fetch SSL certs from database server
+  ansible.builtin.fetch:
+    src: "{{ item }}"
+    dest: "/tmp/{{ item | basename }}"
+    flat: true
+  loop:
+    - "{{ mariadb_ssl.ca }}"
+    - "{{ mariadb_ssl.crt }}"
+    - "{{ mariadb_ssl.key }}"

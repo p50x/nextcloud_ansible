@@ -1,0 +1,25 @@
+---
+# tasks file for onlyoffice installation
+
+- name: Create onlyoffice data directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /opt/onlyoffice/DocumentServer/data
+    - /opt/onlyoffice/DocumentServer/logs
+    - /opt/onlyoffice/DocumentServer/lib
+    - /opt/onlyoffice/DocumentServer/db
+
+- name: Determine if onlyoffice is collocated with nextcloud
+  ansible.builtin.set_fact:
+    _onlyoffice_collocated: >-
+      {{ inventory_hostname in groups.get('nextcloud', []) }}
+
+- name: Include collocated tasks
+  ansible.builtin.include_tasks: collocated.yml
+  when: _onlyoffice_collocated | bool
+
+- name: Include dedicated server tasks
+  ansible.builtin.include_tasks: dedicated.yml
+  when: not (_onlyoffice_collocated | bool)

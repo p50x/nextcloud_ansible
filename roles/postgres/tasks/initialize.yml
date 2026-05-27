@@ -1,0 +1,45 @@
+---
+
+- name: Set postgresql environment variables
+  ansible.builtin.template:
+    src: postgres.sh.j2
+    dest: /etc/profile.d/postgres.sh
+    mode: "0644"
+  notify: Restart postgresql
+  when: (ansible_facts['distribution'] != 'CentOS') and (ansible_facts['distribution_major_version']|int < 10)
+
+- name: Ensure postgresql data directory exists
+  ansible.builtin.file:
+    path: "{{ postgresql_data_dir[ansible_facts['os_family']] }}"
+    owner: "{{ postgresql_user }}"
+    group: "{{ postgresql_group }}"
+    state: directory
+    mode: "0700"
+
+- name: Check if postgresql database is initialized
+  ansible.builtin.stat:
+    path: "{{ postgresql_data_dir[ansible_facts['os_family']] }}/PG_VERSION"
+  register: pgdata_dir_version
+
+- name: Ensure postgresql database is initialized.
+  ansible.builtin.command: "/usr/pgsql-{{ postgresql_version }}/bin/postgresql-{{ postgresql_version }}-setup initdb"
+  when: not pgdata_dir_version.stat.exists
+
+- name: Start postgresql
+  ansible.builtin.systemd:
+    name: "{{ postgresql_daemon_service_name }}.service"
+    state: started
+    enabled: true
+  register: postgres_started
+
+- name: Force-restart postgresql after new locales are generated.
+  ansible.builtin.systemd:
+    name: "{{ postgresql_daemon_service_name }}.service"
+    state: restarted
+  when: locale_gen_result.changed|default(false) and (not postgres_started.changed)
+
+- name: Wait for postgresql come up
+  ansible.builtin.wait_for:
+    host: localhost
+    port: 5432
+  when: postgres_started is changed

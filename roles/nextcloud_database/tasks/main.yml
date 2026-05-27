@@ -1,0 +1,7 @@
+---
+# tasks file for nextcloud_prepare
+# OS packages, database creation, webserver config
+
+- name: Include database create tasks
+  ansible.builtin.include_tasks: 'database/create_{{ nextcloud_db.type }}.yml'
+

@@ -1,0 +1,16 @@
+[Unit]
+Description = Push daemon for Nextcloud clients
+
+[Service]
+Environment=PORT=7867
+Environment=NEXTCLOUD_URL=https://{{ nextcloud_fqdn }}/
+Environment=ALLOW_SELF_SIGNED={% if (tls_certificate.type == 'selfsigned') or (tls_certificate_test) %}true{% else %}false{% endif +%}
+{% if nextcloud_db.tls | bool %}
+Environment=DATABASE_URL=mysql://{{ nextcloud_db.user }}:{{ passwords.database }}@{{ nextcloud_db.host }}/{{ nextcloud_db.name }}?ssl-mode=required&ssl-ca={{ mariadb_ssl.crt }}
+{% endif %}
+ExecStart={{ nextcloud_www_dir }}/apps/notify_push/bin/{{ ansible_facts['architecture'] }}/notify_push {{ nextcloud_www_dir }}/config/config.php
+Type=notify
+User={{ web_user[nextcloud_webserver_type][ansible_facts['os_family']] }}
+
+[Install]
+WantedBy = multi-user.target

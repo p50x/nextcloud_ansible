@@ -1,0 +1,8 @@
+---
+# tasks file for webserver (nginx or apache)
+
+- name: OS family specific installation tasks
+  ansible.builtin.include_tasks: "{{ nextcloud_webserver_type }}/{{ ansible_facts['os_family'] }}.yml"
+
+- name: Include configuration tasks
+  ansible.builtin.include_tasks: "{{ nextcloud_webserver_type }}/configure.yml"

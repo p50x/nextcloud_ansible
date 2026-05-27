@@ -1,0 +1,71 @@
+---
+# tasks file for redis
+
+- name: Include os specific tasks
+  ansible.builtin.include_tasks: "{{ ansible_facts['os_family'] }}.yml"
+
+- name: Configure {{ redis_service_name[ansible_facts['os_family']] }}
+  ansible.builtin.lineinfile:
+    path: "{{ redis_conf_path[ansible_facts['os_family']] }}/{{ redis_service_name[ansible_facts['os_family']] }}.conf"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    # backrefs: true
+    # backup: true
+  loop:
+    - regexp: "^port .*$"
+      line: "port 0"
+    - regexp: "^#?\\s*unixsocket .*$"
+      line: "unixsocket {{ redis_socket.path }}"
+    - regexp: "^#?\\s*unixsocketperm .*$"
+      line: "unixsocketperm {{ redis_socket.perm }}"
+    - regexp: "^#?\\s*maxclients .*$"
+      line: "maxclients 10240"
+    - regexp: "^#?\\s*requirepass .*$"
+      line: "requirepass {{ passwords.redis }}"
+  notify: Restart redis-server
+
+- name: Add webserver user to Redis/Valkey group on shared hosts
+  ansible.builtin.user:
+    name: "{{ web_user[nextcloud_webserver_type][ansible_facts['os_family']] }}"
+    groups: "{{ redis_user_name[ansible_facts['os_family']] }}"
+  when: inventory_hostname in groups['nextcloud']
+
+- name: Set vm.overcommit_memory=1
+  ansible.posix.sysctl:
+    name: vm.overcommit_memory
+    value: "1"
+    state: present
+    reload: true
+    sysctl_file: /etc/sysctl.conf
+  when: ansible_facts['virtualization_type'] not in [ 'docker', 'podman', 'lxc', 'container', 'containerd' ]
+
+- name: Check /sys/kernel/mm/transparent_hugepage/enabled
+  ansible.builtin.stat:
+    path: /sys/kernel/mm/transparent_hugepage/enabled
+  register: redis_hugepage_enabled
+  when: ansible_facts['virtualization_type'] not in [ 'docker', 'podman', 'lxc', 'container', 'containerd' ]
+
+- name: Disable transparent hugepages
+  when:
+    - ansible_facts['virtualization_type'] not in [ 'docker', 'podman', 'lxc', 'container', 'containerd' ]
+    - redis_hugepage_enabled.stat.isreg is defined and redis_hugepage_enabled.stat.isreg
+  block:
+  - name: Disable transparent hugepages - copy service file
+    ansible.builtin.copy:
+      src: disable-transparent-huge-pages.service
+      dest: '{{ systemd_service_path[ansible_facts["os_family"]] }}/disable-transparent-huge-pages.service'
+      owner: root
+      group: root
+      mode: "0644"
+
+  - name: Enable service disable-transparent-hugepages
+    ansible.builtin.service:
+      name: disable-transparent-huge-pages.service
+      enabled: true
+      state: started
+
+- name: Start and enable {{ redis_systemd_unit[ansible_facts['os_family']] }}
+  ansible.builtin.systemd:
+    name: "{{ redis_systemd_unit[ansible_facts['os_family']] }}"
+    state: started
+    enabled: true

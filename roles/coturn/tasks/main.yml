@@ -1,0 +1,12 @@
+---
+# Main coturn
+
+- name: Include OS tasks for coturn
+  ansible.builtin.include_tasks: "{{ ansible_facts['os_family'] }}.yml"
+
+- name: Includ coturn config behind a RProxy
+  ansible.builtin.include_tasks: configure/config_for_rproxy.yml
+  when: rproxy_setup|bool
+
+- name: Include coturn config files
+  ansible.builtin.include_tasks: configure/config_coturn.yml

@@ -1,0 +1,42 @@
+---
+
+# create nextcloud database
+
+- name: Create {{ nextcloud_db.name }} db
+  community.postgresql.postgresql_db:
+    name: "{{ nextcloud_db.name }}"
+    state: present
+    encoding: UTF-8
+    template: template0
+  become: true
+  become_user: postgres
+
+- name: Create {{ nextcloud_db.user }} account
+  community.postgresql.postgresql_user:
+    encrypted: true
+    login_db: "{{ nextcloud_db.name }}"
+    name: "{{ nextcloud_db.user }}"
+    password: "{{ passwords.database }}"
+  become: true
+  become_user: postgres
+
+- name: Grant all privileges on schema public to {{ nextcloud_db.user }}
+  community.postgresql.postgresql_privs:
+    login_db: "{{ nextcloud_db.name }}"
+    privs: ALL
+    type: schema
+    obj: public
+    role: "{{ nextcloud_db.user }}"
+  become: true
+  become_user: postgres
+
+- name: Grant default privileges on tables to {{ nextcloud_db.user }}
+  community.postgresql.postgresql_privs:
+    login_db: "{{ nextcloud_db.name }}"
+    privs: ALL
+    type: default_privs
+    obj: TABLES
+    schema: public
+    role: "{{ nextcloud_db.user }}"
+  become: true
+  become_user: postgres

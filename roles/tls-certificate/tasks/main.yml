@@ -1,0 +1,16 @@
+---
+
+- name: Prepare certificate generation
+  ansible.builtin.include_tasks: prepare_certs.yml
+
+- name: Run ACME setup if certificate type is acme.sh
+  ansible.builtin.include_tasks: acme_setup.yml
+  when: tls_certificate.type == 'acme.sh'
+
+- name: Issue ACME certificate
+  ansible.builtin.include_tasks: acme.sh.yml
+  when: tls_certificate.type == 'acme.sh'
+
+- name: Generate selfsigned certificate
+  ansible.builtin.include_tasks: selfsigned.yml
+  when: tls_certificate.type == 'selfsigned'

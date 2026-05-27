@@ -1,0 +1,14 @@
+---
+# vars file for nginx/apache web server
+
+nginx_apt_repo_url:
+  Ubuntu: "deb http://nginx.org/packages/{{ ansible_facts['distribution'] | lower }}/ {{ ansible_facts['distribution_release'] }} nginx"
+  Debian: "deb http://nginx.org/packages/{{ ansible_facts['distribution'] | lower }}/ {{ ansible_facts['distribution_release'] }} nginx"
+
+nginx_apt_key:
+  Debian:
+    url: https://nginx.org/keys/nginx_signing.key
+    id: 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62
+  Ubuntu:
+    url: https://nginx.org/keys/nginx_signing.key
+    id: 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62

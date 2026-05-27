@@ -1,0 +1,18 @@
+---
+# tasks file for nextcloudoffice (collabora)
+
+- name: Include os specific tasks
+  ansible.builtin.include_tasks: "{{ ansible_facts['os_family'] }}.yml"
+
+- name: Determine if nextcloudoffice is collocated with nextcloud
+  ansible.builtin.set_fact:
+    _nextcloudoffice_collocated: >-
+      {{ inventory_hostname in groups.get('nextcloud', []) }}
+
+- name: Include collocated tasks
+  ansible.builtin.include_tasks: collocated.yml
+  when: _nextcloudoffice_collocated | bool
+
+- name: Include dedicated server tasks
+  ansible.builtin.include_tasks: dedicated.yml
+  when: not (_nextcloudoffice_collocated | bool)

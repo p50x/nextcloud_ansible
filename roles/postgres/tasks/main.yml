@@ -1,0 +1,11 @@
+---
+# tasks file for postgres
+
+- name: Include os specific tasks
+  ansible.builtin.include_tasks: "{{ ansible_facts['os_family'] }}.yml"
+
+- name: Initialize postgresql
+  ansible.builtin.include_tasks: "initialize.yml"
+
+- name: Configure postgresql
+  ansible.builtin.include_tasks: "configure.yml"

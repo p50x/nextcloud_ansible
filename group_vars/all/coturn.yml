@@ -1,0 +1,20 @@
+# Variable for config coturn behind a NAT and Reverse Proxy 
+coturn_fqdn: "{{ hostvars[groups['coturn'][0]]['inventory_hostname'] }}"
+
+cert_coturn:
+  user: cert-sync
+  home: /var/cert-sync
+  certs_path: /var/cert-sync/certs
+
+cert_sync:
+  rsync_key_path: "/root/.ssh/cert_sync_rsync"
+  restart_key_path: "/root/.ssh/cert_sync_restart"
+
+rproxy:
+  fqdn: "{{ hostvars[groups['reverse_proxy'][0]]['inventory_hostname'] }}"
+  cert: "/path/to/swag/letsencrypt/live/{{ coturn_fqdn }}/fullchain.pem"
+  priv_key: "/path/to/swag/letsencrypt/live/{{ coturn_fqdn }}/privkey.pem"
+  
+coturn_sync_target_host: "{{ hostvars[groups['coturn'][0]]['ansible_host'] }}"
+rproxy_tls_certificate_file: "{{ cert_coturn.certs_path }}/cert.crt"
+rproxy_tls_certificate_key: "{{ cert_coturn.certs_path }}/cert.key"

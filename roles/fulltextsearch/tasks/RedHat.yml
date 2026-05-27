@@ -1,0 +1,8 @@
+---
+
+- name: Install needed packages
+  ansible.builtin.dnf:
+    name:
+      - elasticsearch
+      - tesseract
+    state: latest

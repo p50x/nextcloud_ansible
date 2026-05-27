@@ -1,0 +1,74 @@
+---
+# tasks file for prep_talk
+
+- name: Get my public ip
+  community.general.ipify_facts:
+  register: external_ip
+
+- name: Include os specific tasks
+  ansible.builtin.include_tasks: "{{ ansible_facts['os_family'] }}.yml"
+
+- name: Configure coturn logrotate
+  ansible.builtin.template:
+    src: coturn.logrotate.j2
+    dest: "/etc/logrotate.d/coturn"
+    owner: root
+    group: root
+    mode: "0644"
+    force: true
+
+- name: Ensure coturn log directory exists
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ coturn_user[ansible_facts['os_family']] }}"
+    group: "{{ coturn_user[ansible_facts['os_family']] }}"
+    mode: "0755"
+  loop:
+    - "/var/log/coturn"
+    - "/run/coturn"
+  notify: restart coturn
+
+- name: Configure coturn in /etc/turnserver.conf
+  ansible.builtin.template:
+    src: turnserver.conf.j2
+    dest: "{{ coturn_conf_path[ansible_facts['os_family']] }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart coturn
+
+- name: Ensure coturn systemd override directory exists
+  ansible.builtin.file:
+    path: /etc/systemd/system/coturn.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  notify: restart coturn
+
+- name: Configure coturn systemd service override
+  ansible.builtin.template:
+    src: coturn.systemd.override.j2
+    dest: /etc/systemd/system/coturn.service.d/override.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart coturn
+
+- name: Enable and start coturn service
+  ansible.builtin.systemd:
+    name: coturn
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Run coturn handler
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for coturn TLS listener socket
+  ansible.builtin.wait_for:
+    host: "{{ ansible_facts['default_ipv4']['address'] }}"
+    port: "{{ coturn_tls_port }}"
+    state: started
+    timeout: 30

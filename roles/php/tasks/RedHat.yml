@@ -1,0 +1,14 @@
+---
+
+- name: Install needed php packages
+  ansible.builtin.dnf:
+    name: "{{ php_package_required['RedHat'] }}"
+    state: latest
+    enablerepo: "remi-php{{ php_version | replace('.', '') }}"
+
+- name: Install optional php packages
+  ansible.builtin.dnf:
+    name: "{{ php_package_optional['RedHat'] }}"
+    state: latest
+    enablerepo: "remi-php{{ php_version | replace('.', '') }}"
+  when: php_install_optional_packages|bool

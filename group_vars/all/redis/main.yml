@@ -1,0 +1,48 @@
+---
+# vars file for redis
+
+redis_yum_repo:
+  RedHat: epel
+  CentOS: epel
+  Fedora: epel
+  AlmaLinux: epel
+  Rocky: epel
+
+redis_conf_path:
+  RedHat: '/etc/valkey'
+  Debian: '/etc/redis'
+  Suse: '/etc/valkey'
+
+redis_service_name:
+  RedHat: valkey
+  Debian: redis
+  Suse: valkey
+
+redis_systemd_unit:
+  RedHat: valkey.service
+  Debian: redis.service
+  Suse: valkey.target
+
+redis_package_name:
+  RedHat:
+    - valkey
+  Debian:
+    - redis-server
+    - redis-tools
+    - python3-redis
+  Suse:
+    - valkey
+
+redis_user_name:
+  RedHat: valkey
+  Debian: redis
+  Suse: valkey
+
+# redis config
+# if inventory_name is localhost unix socket will be useed
+redis_socket:
+  path: "/run/{{ redis_service_name[ansible_facts['os_family']] }}/{{ redis_service_name[ansible_facts['os_family']] }}.sock"
+  perm: "770"
+redis_tcp:
+  address: "{{ hostvars[groups['redis'][0]].ansible_facts['default_ipv4']['address'] }}"
+  port: "6379"

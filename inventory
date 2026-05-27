@@ -1,0 +1,75 @@
+---
+# Example: multi-server setup where nextcloudoffice and whiteboard
+# share the same server (office.example.com)
+all:
+
+nextcloud:
+  hosts:
+    nc.p50x.xyz:
+      ansible_user: ansible
+
+redis:
+  hosts:
+    nc.p50x.xyz:
+
+database:
+  hosts:
+    db.p50x.lan:
+      ansible_user: ansible
+
+elasticsearch:
+  hosts:
+    nc.p50x.xyz:
+
+coturn:
+  hosts:
+    nc.p50x.xyz:
+
+signal:
+  vars:
+    additional_certificate_fqdns:
+      - recording.p50x.lan
+  hosts:
+    hpb.p50x.xyz:
+      ansible_user: ansible
+
+hapr:
+  hosts:
+    nc.p50x.xyz:
+
+# nextcloudoffice and onlyoffice are mutual exclusive
+# choose one or the other
+# nextcloudoffice and whiteboard can share the same server
+
+onlyoffice:
+  hosts:
+    nc.p50x.xyz:
+
+eurooffice:
+  hosts:
+    nc.p50x.xyz:
+
+whiteboard:
+  vars:
+    additional_fqdns:
+      additional_fqdn_whiteboard: nc.p50x.xyz
+  hosts:
+    nc.p50x.xyz:
+
+# webserver and docker groups are managed automatically
+# do not edit them even if you don't install a particular service
+webserver:
+  hosts:
+    nc.p50x.xyz:
+    hpb.p50x.xyz:
+
+docker:
+  hosts:
+    nc.p50x.xyz:
+    hpb.p50x.xyz:
+
+# host for your nginx base front end reverse proxy for tls certificate, coturn, and more
+# optional 
+reverse_proxy:
+  hosts:
+    #rproxy.p50x.lan:

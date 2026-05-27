@@ -1,0 +1,20 @@
+---
+- name: Read config.php content
+  ansible.builtin.slurp:
+    src: "{{ nextcloud_www_dir }}/config/config.php"
+  register: config_php
+
+- name: Inject dbdriveroptions SSL in config.php
+  ansible.builtin.blockinfile:
+    path: "{{ nextcloud_www_dir }}/config/config.php"
+    insertbefore: "^\\);"
+    marker: "  // {mark} ANSIBLE MANAGED BLOCK - MariaDB SSL"
+    block: |
+        'dbdriveroptions' => [
+            1007 => '{{ mariadb_ssl.key }}',
+            1008 => '{{ mariadb_ssl.crt }}',
+            1009 => '{{ mariadb_ssl.ca }}',
+            1014 => false,
+        ],
+  when: "'dbdriveroptions' not in config_php.content | b64decode"
+  notify: restart web services

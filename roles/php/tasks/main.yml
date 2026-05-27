@@ -1,0 +1,30 @@
+---
+# tasks file for php
+
+- name: Pkg manager specific tasks
+  ansible.builtin.include_tasks: "{{ ansible_facts['os_family'] }}.yml"
+
+- name: Configure php
+  ansible.builtin.include_tasks: configure.yml
+
+- name: Include selinux tasks
+  ansible.builtin.include_tasks: selinux.yml
+  when:
+    - (ansible_facts['os_family'] == "RedHat")
+    - ('status' in ansible_facts['selinux'])
+    - (ansible_facts['selinux']['status'] == "enabled")
+    - false
+
+- name: Enable php-fpm
+  ansible.builtin.systemd:
+    name: "{{ php_service_name[ansible_facts['os_family']] }}"
+    state: started
+    enabled: true
+
+- name: Enable apache php conf
+  ansible.builtin.command: a2enconf php{{ php_version }}-fpm
+  when:
+    - nextcloud_webserver_type == 'apache'
+    - ansible_facts['os_family'] == 'Debian'
+  changed_when: "'Module php' in command_result.stdout"
+  register: command_result

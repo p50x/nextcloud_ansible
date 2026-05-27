@@ -1,0 +1,42 @@
+# Managed by Ansible — do not edit manually
+127.0.0.1   localhost
+
+# IPv6
+::1         localhost ip6-localhost ip6-loopback
+ff02::1     ip6-allnodes
+ff02::2     ip6-allrouters
+
+{% set host_fqdn = inventory_hostname %}
+{% set host_short = inventory_hostname.split('.')[0] %}
+
+{% for host in groups['all'] %}
+{% if hostvars[host]['ansible_default_ipv4'] is defined %}
+{% set parts = host.split('.') %}
+{% if parts | length > 2 %}
+{{ hostvars[host]['ansible_default_ipv4']['address'] }} {{ host }} {{ parts[0] }}
+{% else %}
+{{ hostvars[host]['ansible_default_ipv4']['address'] }} {{ host }}
+{% endif %}
+{% endif %}
+{% endfor %}
+
+{% if reverse_proxy is defined %}
+{% set host = groups['nextcloud'][0] %}
+{% set parts = nextcloud_fqdn.split('.') %}
+{% if parts | length > 2 %}
+{{ hostvars[host]['ansible_default_ipv4']['address'] }} {{ nextcloud_fqdn }} {{ parts[0] }}
+{% else %}
+{{ hostvars[host]['ansible_default_ipv4']['address'] }} {{ nextcloud_fqdn }}
+{% endif %}
+{% endif %}
+
+{% if not _hosts_use_dhcp %}
+# Static IP — map FQDN to primary address
+{% if host_fqdn != host_short %}
+{{ ansible_facts['default_ipv4']['address'] }}   {{ host_fqdn }}   {{ host_short }}
+{% else %}
+{{ ansible_facts['default_ipv4']['address'] }}   {{ host_short }}
+{% endif %}
+{% else %}
+# DHCP detected — hostname resolution via DNS only
+{% endif %}

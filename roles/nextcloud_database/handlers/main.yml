@@ -1,0 +1,8 @@
+---
+# handlers file for webserver
+
+- name: Restart mariadb
+  ansible.builtin.systemd:
+    name: mariadb
+    state: restarted
+  listen: "restart mariadb"

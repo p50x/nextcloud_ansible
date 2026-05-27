@@ -1,0 +1,9 @@
+---
+
+- name: Install restic
+  ansible.builtin.apt:
+    name:
+      - restic
+      - rclone
+    update_cache: true
+    state: present

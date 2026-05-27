@@ -1,0 +1,6 @@
+---
+# handlers file for mariadb
+- name: Restart mariadb
+  ansible.builtin.systemd:
+    name: mysql
+    state: restarted

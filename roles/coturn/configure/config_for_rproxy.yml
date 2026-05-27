@@ -1,0 +1,95 @@
+---
+# Config coturn when behind a NAT with a RProxy (Reverse Proxy)
+
+# Reverse Proxy tasks
+- name: Generate cert-sync SSH keypair for rsync on reverse proxy
+  community.crypto.openssh_keypair:
+    path: "{{ cert_sync.rsync_key_path }}"
+    type: ed25519
+    comment: "cert-sync-rsync@{{ inventory_hostname }}"
+    mode: "0600"
+    regenerate: full_idempotence
+  delegate_to: "{{ rproxy.fqdn }}"
+  register: cert_sync_rsync_keypair
+
+- name: Generate cert-sync SSH keypair for restart on reverse proxy
+  community.crypto.openssh_keypair:
+    path: "{{ cert_sync.restart_key_path }}"
+    type: ed25519
+    comment: "cert-sync-restart@{{ inventory_hostname }}"
+    mode: "0600"
+    regenerate: full_idempotence
+  delegate_to: "{{ rproxy.fqdn }}"
+  register: cert_sync_restart_keypair
+
+# Coturn tasks
+- name: Install rsync
+  ansible.builtin.package:
+    name: rsync
+    state: present
+
+- name: Create restricted user for cert sync
+  ansible.builtin.user:
+    name: "{{ cert_coturn.user }}"
+    shell: /usr/sbin/nologin
+    home: "{{ cert_coturn.home }}"
+    create_home: true
+    system: true
+
+- name: Create certs directory
+  ansible.builtin.file:
+    path: "{{ cert_coturn.certs_path }}"
+    state: directory
+    owner: "{{ cert_coturn.user }}"
+    mode: "0700"
+
+- name: Create cert sync reload script
+  ansible.builtin.copy:
+    dest: /usr/local/bin/cert-sync-reload
+    content: |
+      #!/bin/bash
+      systemctl restart coturn
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Allow cert-sync user to run reload script via sudo
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ cert_coturn.user }}"
+    content: "{{ cert_coturn.user }} ALL=(ALL) NOPASSWD: /usr/local/bin/cert-sync-reload\n"
+    mode: "0440"
+    validate: visudo -cf %s
+
+- name: Deploy SSH public key for rsync
+  ansible.posix.authorized_key:
+    user: "{{ cert_coturn.user }}"
+    key: "{{ cert_sync_rsync_keypair.public_key }}"
+    exclusive: false
+    key_options: 'command="rrsync -wo {{ cert_coturn.certs_path }}",no-pty,no-agent-forwarding,no-X11-forwarding,no-port-forwarding'
+
+- name: Deploy SSH public key for restart
+  ansible.posix.authorized_key:
+    user: "{{ cert_coturn.user }}"
+    key: "{{ cert_sync_restart_keypair.public_key }}"
+    exclusive: false
+    key_options: 'command="sudo /usr/local/bin/cert-sync-reload",no-pty,no-agent-forwarding,no-X11-forwarding,no-port-forwarding'
+
+# Reverse Proxy Cron
+- name: Create cron to push certs to coturn
+  ansible.builtin.cron:
+    name: "Push letsencrypt certs to coturn"
+    minute: "0"
+    hour: "3"
+    day: "1"
+    month: "*"
+    job: >-
+      rsync -a
+      {{ rproxy.cert }}
+      {{ rproxy.priv_key }}
+      {{ cert_coturn.user }}@{{ coturn_sync_target_host }}:{{ cert_coturn.certs_path }}/
+      -e "ssh -i {{ cert_sync.rsync_key_path }} -o StrictHostKeyChecking=yes"
+      &&
+      ssh -i {{ cert_sync.restart_key_path }}
+      -o StrictHostKeyChecking=yes
+      {{ cert_coturn.user }}@{{ coturn_sync_target_host }}
+  delegate_to: "{{ rproxy.fqdn }}"

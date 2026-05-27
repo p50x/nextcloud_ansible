@@ -1,0 +1,96 @@
+---
+
+# Your Nextcloud Server Domain Name
+# Default is the fqdn of the Machine
+nextcloud_fqdn: "{{ hostvars[groups['nextcloud'][0]]['inventory_hostname'] }}"
+
+# TLS Certificate Configuration
+# type: selfsigned (default) or acme.sh
+# email: Your email address for ACME registration (required for acme.sh)
+# acme_ca: Your CA for acme.sh, default is zerossl
+#          see: https://github.com/acmesh-official/acme.sh/wiki/Server
+#          options: zerossl, letsencrypt, letsencrypt_test
+tls_certificate:
+    type: selfsigned
+    # type: acme.sh
+    # email: nextcloud@example.com
+    # acme_ca: letsencrypt_test
+
+# Nextcloud variables
+
+# Réseau NAT
+nat: true
+
+# IP du Reverse Proxy
+rproxy_setup: false
+rproxy: 
+  ip: "{{ hostvars[groups['reverse_proxy'][0]]['ansible_default_ipv4']['address'] }}"
+  fqdn: "{{ hostvars[groups['reverse_proxy'][0]]['inventory_hostname'] }}"
+  # Adjust the path according to your config
+  priv_key: /home/virtb/docker/swag/config/keys/cert.key
+  cert: /home/virtb/docker/swag/config/keys/cert.crt
+
+# Nextcloud Web Root
+nextcloud_www_dir: /var/www/nextcloud
+
+# Nextcloud Data Dir
+nextcloud_data_dir: /var/nc-data
+
+# Nextcloud Admin User
+# Leave Password Empty to generate secure, random one
+nextcloud_admin: admin_p50x
+nextcloud_passwd: ''
+
+# Always get the latest version of Nextcloud
+nextcloud_archive: https://download.nextcloud.com/server/releases/latest.tar.bz2
+
+# this sets the default region for phone numbers on your Nextcloud server
+# using ISO 3166-1 country codes such as DE for Germany, FR for France,
+nextcloud_default_phone_region: FR
+
+# OnlyOffice Server Domain Name
+# Default is the fqdn of the first host in the onlyoffice group
+# For collocated setup this equals nextcloud_fqdn
+onlyoffice_fqdn: "{{ hostvars[groups['onlyoffice'][0]]['inventory_hostname'] }}"
+
+# Nextcloud Office (Collabora) Server Domain Name
+# Default is the fqdn of the first host in the nextcloudoffice group
+# For collocated setup this equals nextcloud_fqdn
+nextcloudoffice_fqdn: "{{ hostvars[groups['nextcloudoffice'][0]]['inventory_hostname'] }}"
+
+nextcloud_install:
+  # Preview Icons
+  preview: true
+  # Install notify_push
+  notify_push: true
+  # Install turn server for Nextcloud Talk
+  # coturn_tls_port is auto-selected:
+  # - 5349 when coturn runs on the same host as Nextcloud
+  # - 443 when coturn runs on a dedicated host
+  # Talk coturn endpoint is auto-selected:
+  # - collocated: coturn host IPv4 (avoids local FQDN->loopback issues)
+  # - dedicated:  coturn inventory hostname/FQDN
+  # override in inventory/group_vars if required
+  talk: true
+  # Install HPB for Nextcloud Talk
+  hpb: true
+  # Install HaPR for exAPPs
+  hapr: false
+  # Install Collabora Online
+  # more info about collabora office: https://www.collaboraoffice.com/
+  nextcloudoffice: false
+  # Install OnlyOffice Document Server
+  # OnlyOffice runs behind nginx/apache reverse proxy (same architecture as NextcloudOffice)
+  # Can run collocated with Nextcloud or on a dedicated server
+  onlyoffice: false
+  # Install Euro-Office Document Server (OnlyOffice-compatible)
+  # Euro-Office runs behind nginx/apache reverse proxy (same architecture as OnlyOffice)
+  # Can run collocated with Nextcloud or on a dedicated server
+  # EuroOffice isn't stable yet, use it at your own risk 
+  eurooffice: true
+  # Install Whiteboard (Excalidraw-based collaborative whiteboard)
+  # Requires a WebSocket server (Docker container)
+  # Can run collocated with Nextcloud or on a dedicated server
+  whiteboard: true
+  # Install fulltextsearch
+  fulltextsearch: false

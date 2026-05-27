@@ -1,0 +1,62 @@
+---
+# Example: multi-server setup where nextcloudoffice and whiteboard
+# share the same server (office.example.com)
+all:
+
+nextcloud:
+  hosts:
+    nc.p50x.lan:
+      ansible_user: ansible
+
+redis:
+  hosts:
+    nc.p50x.lan:
+
+database:
+  hosts:
+    db.p50x.lan:
+      ansible_user: ansible
+
+elasticsearch:
+  hosts:
+    nc.p50x.lan:
+
+coturn:
+  hosts:
+    nc.p50x.lan:
+
+signal:
+  vars:
+    additional_certificate_fqdns:
+      - test.lan
+  hosts:
+    nc.p50x.lan:
+
+hapr:
+  hosts:
+    nc.p50x.lan:
+
+# nextcloudoffice and onlyoffice are mutual exclusive
+# choose one or the other
+# nextcloudoffice and whiteboard can share the same server
+
+onlyoffice:
+  hosts:
+    nc.p50x.lan:
+
+whiteboard:
+  vars:
+    additional_fqdns:
+      additional_fqdn_whiteboard: nc.p50x.lan
+  hosts:
+    nc.p50x.lan:
+
+# webserver and docker groups are managed automatically
+# do not edit them even if you don't install a particular service
+webserver:
+  hosts:
+    nc.p50x.lan:
+
+docker:
+  hosts:
+    nc.p50x.lan:

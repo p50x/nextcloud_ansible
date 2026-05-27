@@ -1,0 +1,22 @@
+---
+- name: Require SSL for database user
+  community.mysql.mysql_user:
+    name: "{{ nextcloud_db.user }}"
+    host: "{{ hostvars[groups['nextcloud'][0]].ansible_default_ipv4.address }}"
+    tls_requires:
+      ssl: true
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Verify TLS is active in MariaDB
+  community.mysql.mysql_query:
+    query: "SHOW VARIABLES LIKE 'have_ssl'"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  register: ssl_check
+
+- name: Assert TLS is enabled
+  ansible.builtin.assert:
+    that:
+      - ssl_check.query_result[0][0]['Value'] == 'YES'
+    fail_msg: "TLS n'est pas actif dans MariaDB !"
+    success_msg: "TLS est actif dans MariaDB"
