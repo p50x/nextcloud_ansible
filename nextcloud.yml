@@ -142,8 +142,6 @@
     - name: Start Docker containers
       ansible.builtin.include_tasks: roles/docker/tasks/compose_up.yml
 
-##### CONF PERSO #####
-
 - name: Prepare Nextcloud Database
   hosts: database
   become: true
@@ -151,8 +149,6 @@
 
   roles:
     - nextcloud_database
-
-  # Play dédié pour la config SSL après installation
 
 - name: Create Certificate for MariaDB TLS
   hosts: database
@@ -162,10 +158,9 @@
     - ansible.builtin.include_role:
         name: nextcloud_database
         tasks_from: database/create_mysql_tls.yml
-      when: 
+      when:
         - nextcloud_db.type == 'mysql'
         - nextcloud_db.tls | bool
-#####################
 
 - name: Install nextcloud
   hosts: nextcloud
