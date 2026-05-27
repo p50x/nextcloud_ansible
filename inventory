@@ -5,37 +5,37 @@ all:
 
 nextcloud:
   hosts:
-    nc.p50x.xyz:
+    nc.exemple.com:
       ansible_user: ansible
 
 redis:
   hosts:
-    nc.p50x.xyz:
+    nc.exemple.com:
 
 database:
   hosts:
-    db.p50x.lan:
+    db.exemple.com:
       ansible_user: ansible
 
 elasticsearch:
   hosts:
-    nc.p50x.xyz:
+    nc.exemple.com:
 
 coturn:
   hosts:
-    nc.p50x.xyz:
+    nc.exemple.com:
 
 signal:
   vars:
     additional_certificate_fqdns:
-      - recording.p50x.lan
+      - recording.exemple.lan
   hosts:
-    hpb.p50x.xyz:
+    hpb.exemple.com:
       ansible_user: ansible
 
 hapr:
   hosts:
-    nc.p50x.xyz:
+    nc.exemple.com:
 
 # nextcloudoffice and onlyoffice are mutual exclusive
 # choose one or the other
@@ -43,33 +43,33 @@ hapr:
 
 onlyoffice:
   hosts:
-    nc.p50x.xyz:
+    nc.exemple.com:
 
 eurooffice:
   hosts:
-    nc.p50x.xyz:
+    nc.exemple.com:
 
 whiteboard:
   vars:
     additional_fqdns:
-      additional_fqdn_whiteboard: nc.p50x.xyz
+      additional_fqdn_whiteboard: nc.exemple.com
   hosts:
-    nc.p50x.xyz:
+    nc.exemple.com:
 
 # webserver and docker groups are managed automatically
 # do not edit them even if you don't install a particular service
 webserver:
   hosts:
-    nc.p50x.xyz:
-    hpb.p50x.xyz:
+    nc.exemple.com:
+    hpb.exemple.com:
 
 docker:
   hosts:
-    nc.p50x.xyz:
-    hpb.p50x.xyz:
+    nc.exemple.com:
+    hpb.exemple.com:
 
 # host for your nginx base front end reverse proxy for tls certificate, coturn, and more
 # optional 
 reverse_proxy:
   hosts:
-    #rproxy.p50x.lan:
+    #rproxy.exemple.com:
