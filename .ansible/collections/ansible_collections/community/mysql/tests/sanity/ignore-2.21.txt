@@ -1,3 +1,0 @@
-plugins/modules/mysql_db.py pylint:ansible-bad-function
-plugins/module_utils/mysql.py pylint:unused-import
-plugins/module_utils/version.py pylint:unused-import

@@ -1,8 +1,0 @@
-download_url: https://galaxy.ansible.com/api/v3/plugin/ansible/content/published/collections/artifacts/devsec-hardening-10.5.2.tar.gz
-format_version: 1.0.0
-name: hardening
-namespace: devsec
-server: https://galaxy.ansible.com/api/
-signatures: []
-version: 10.5.2
-version_url: /api/v3/plugin/ansible/content/published/collections/index/devsec/hardening/versions/10.5.2/

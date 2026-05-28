@@ -1,8 +1,0 @@
-download_url: https://galaxy.ansible.com/api/v3/plugin/ansible/content/published/collections/artifacts/reinernippes-nextcloud-1.0.0.tar.gz
-format_version: 1.0.0
-name: nextcloud
-namespace: reinernippes
-server: https://galaxy.ansible.com/api/
-signatures: []
-version: 1.0.0
-version_url: /api/v3/plugin/ansible/content/published/collections/index/reinernippes/nextcloud/versions/1.0.0/

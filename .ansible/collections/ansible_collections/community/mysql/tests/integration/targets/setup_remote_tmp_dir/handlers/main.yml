@@ -1,9 +1,0 @@
-- name: delete temporary directory
-  include_tasks: default-cleanup.yml
-  tags:
-    - setup_remote_tmp_dir
-
-- name: delete temporary directory (windows)
-  include_tasks: windows-cleanup.yml
-  tags:
-    - setup_remote_tmp_dir
